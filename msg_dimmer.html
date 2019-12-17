@@ -1,0 +1,52 @@
+<!--
+  Copyright 2018, Bart Butenaers
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<script type="text/javascript">
+    RED.nodes.registerType('msg-dimmer',{
+        category: 'function',
+        color: '#E9967A',
+        defaults: {
+            name: {value:""},      
+            interval: {value: 500},
+            intervalunit: {value: "msecs"}
+        },        
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-clock-o",
+        label: function() {
+            return this.name||"Dimmer";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="msg-dimmer">
+    <div class="form-row">
+        <label for="node-input-interval"><i class="fa fa-clock"></i> Interval</label>
+        <input type="number" id="node-input-interval" style="width:180px;">
+        <select id="node-input-intervalunit" style="width:120px;">
+            <option value="msecs">MilliSeconds</option>
+            <option value="secs">Seconds</option>
+            <option value="mins">Minutes</option>
+            <option value="hours">Hours</option>
+        </select>
+    </div>
+    <br>
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="msg-dimmer">
+    <p>A node for keeping the last message within a time interval.</p>
+</script>
+
