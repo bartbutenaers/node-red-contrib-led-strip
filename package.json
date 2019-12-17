@@ -1,0 +1,23 @@
+{
+    "name"         : "node-red-contrib-msg-dimmer",
+    "version"      : "1.0.0",
+    "description"  : "A Node-RED node to create a dimming effect, by keeping the last message within a time interval",
+    "author": {
+        "name": "Bart Butenaers"
+    },
+    "license": "Apache-2.0",
+    "keywords": [ "node-red", "interval", "window", "recent", "msg", "dim", "dimmer"],
+    "bugs": {
+        "url": "https://github.com/bartbutenaers/node-red-contrib-msg-dimmer/issues"
+    },
+    "homepage": "https://github.com/bartbutenaers/node-red-contrib-msg-dimmer",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bartbutenaers/node-red-contrib-msg-dimmer.git"
+    },
+    "node-red": {
+        "nodes": {
+            "msg-dimmer": "msg_dimmer.js"
+        }
+    }
+}
