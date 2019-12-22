@@ -9,4 +9,4 @@ npm install bartbutenaers/node-red-contrib-led-strip
 
 ## Usage
 
-![led_strip_demo](https://user-images.githubusercontent.com/14224149/71328561-6f4dc800-2519-11ea-8f45-a024af4e617c.gif)
+![led_strip_demo2](https://user-images.githubusercontent.com/14224149/71328589-cd7aab00-2519-11ea-9084-d4940d447d28.gif)
