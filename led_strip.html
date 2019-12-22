@@ -1,0 +1,277 @@
+<!--
+  Copyright 2018, Bart Butenaers
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<script type="text/javascript">
+    RED.nodes.registerType('led-strip',{
+        category: 'function',
+        color: '#E9967A',
+        defaults: {
+            name: {value: ""},  
+            aspectRatio: {value: false},
+            leds: {value: []}     
+        },        
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-lightbulb-o",
+        label: function() {
+            return this.name || "LED strip";
+        },
+        oneditprepare: function() {
+            function createLed() {
+                led = {
+                    color           : "#ffffff",
+                    description     : "", 
+                    source          : "", 
+                    sourceType      : "flow", 
+                    destination     : "", 
+                    destinationType : "flow",
+                    minimum         : 0, 
+                    maximum         : 255, 
+                    stepSize        : 10, 
+                    stepUnit        : "perc"
+                }
+                return led;
+            }
+    
+            function addPropertyRow(container, propertyName) {
+                var propertyRow = $('<div/>',{style:"margin-top:8px;"}).appendTo(container);
+                $('<div/>', {style:"display:inline-block;text-align:right; width:120px; padding-right:10px; box-sizing:border-box;"}).text(propertyName).appendTo(propertyRow);
+                
+                return propertyRow;
+            }
+            
+            // Create a table of LED definitions
+            var ledList = $("#node-input-leds-container").css('min-height','350px').css('min-width','400px').editableList({
+                addItem: function(container, i, led) {
+                    var descriptionRow, sourceRow, destinationRow, minimumRow, maximumRow, stepSizeRow;
+                        
+                    // By default the list items will be collapsed.
+                    // But use the expanded icon, to make sure the first "expandButton.click()" exection collapses it...
+                    var expandIcon = "fa fa-angle-down";
+
+                    // When led === {} then we have a new list item (i.e. user pressed the "add" button)
+                    if (Object.keys(led).length === 0) {
+                        led = createLed();
+                        
+                        // New list items should be expanded by default.
+                        // This way the user becomes aware which properties the new widget offers...
+                        // But use the collapsed icon, to make sure the first "expandButton.click()" exection expands it...
+                        expandIcon = "fa fa-angle-right";
+                    }
+                    
+                    container.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+                    
+                    // Add a new row to the editableList
+                    var headerRow  = $('<div/>').appendTo(container);
+                    
+                    // Show a click-able expand/compress icon before each header row.
+                    var expandButton = $('<span/>', {style: "margin-left:5px; margin-right:10px;"}).html('<i class="' + expandIcon + '"></i>').appendTo(headerRow);   
+                    expandButton.click(function(e) {
+                        e.preventDefault();
+                        
+                        // Switch the icon between expand and compress
+                        if (this.firstElementChild.className === "fa fa-angle-right") {
+                            this.firstElementChild.className = "fa fa-angle-down";
+                            
+                            descriptionRow.show();
+                            sourceRow.show();
+                            destinationRow.show();
+                            minimumRow.show();
+                            maximumRow.show();
+                            stepSizeRow.show();
+                        }
+                        else {
+                            this.firstElementChild.className = "fa fa-angle-right";
+                            
+                            descriptionRow.hide();
+                            sourceRow.hide();
+                            destinationRow.hide();
+                            minimumRow.hide();
+                            maximumRow.hide();
+                            stepSizeRow.hide();
+                        }
+                    });
+                    
+                    // Create a color picker field
+                    var colorField = $('<input/>',{class:"node-input-led-color",type:"color",style: "width:30px; border: none; background: transparent;"}).appendTo(headerRow);
+                    colorField.val(led.color);
+
+                    // Create a title field (note that the title text will set afterwards, in the descriptionField change handler function)
+                    var titleField = $('<span/>', {style: "margin-left:10px; margin-right:10px; font-weight:Bold"}).text("").appendTo(headerRow);
+                    titleField.click(function(evt){
+                        expandButton.trigger( "click" )
+                    })
+                    
+                    // Add a 'Description' property row
+                    descriptionRow = addPropertyRow(container, "Description");
+                    var descriptionField = $('<input/>',{class:"node-input-led-description",type:"text",style: "width:180px; margin-right:10px;"}).appendTo(descriptionRow);
+                    // Update the title, when the description has been updated
+                    descriptionField.on("input", function() {
+                        var parent = $(this).parent().parent();
+                
+                        var row = $(parent);
+                        var ledDescription = row.find(".node-input-led-name").val();
+                        
+                        if (ledDescription && ledDescription != "") {
+                            titleField.text( "LED ( " + ledDescription + " )" );
+                        }
+                        else {
+                            titleField.text("LED ( unknown description )");
+                        }
+                    });
+                    descriptionField.val(led.description);
+                    descriptionField.trigger("input");
+                    descriptionField.autocomplete({
+                        source: function(req, add){
+                            // Show some commonly used led descriptions in an autocomplete field
+                            var commonDescriptions = ["red", "green", "blue", "white", "warm white", "cold white"];
+                            add($.ui.autocomplete.filter(commonDescriptions , req.term));
+                        }
+                    });
+                    
+                    // Add a 'Source' property row
+                    sourceRow = addPropertyRow(container, "Source");
+                    var sourceField = $('<input/>',{class:"node-input-led-source",type:"text",placeholder:"field description",style: "width:180px; margin-right:10px;"}).appendTo(sourceRow);
+                    var sourceTypeField = $('<input/>',{class:"node-input-led-sourceType",type:"hidden"}).appendTo(sourceRow);
+                    sourceField.typedInput({
+                        //default: "flow",
+                        typeField: sourceTypeField,
+                        types: ['flow', 'global', 'msg']
+                    });
+                    sourceField.typedInput("type", led.sourceType);              
+                    sourceField.typedInput("value", led.source);  
+
+                    // Add a 'Destination' property row
+                    destinationRow = addPropertyRow(container, "Destination");
+                    var destinationField = $('<input/>',{class:"node-input-led-destination",type:"text",placeholder:"field description",style: "width:180px; margin-right:10px;"}).appendTo(destinationRow);
+                    var destinationTypeField = $('<input/>',{class:"node-input-led-destinationType",type:"hidden"}).appendTo(destinationRow);
+                    destinationField.typedInput({
+                        //default: "flow",
+                        typeField: destinationTypeField,
+                        types: ['flow', 'global', 'msg']
+                    });
+                    destinationField.typedInput("type", led.destinationType);              
+                    destinationField.typedInput("value", led.destination);
+
+                    // Add a 'Minimum' property row
+                    minimumRow = addPropertyRow(container, "Minimum");
+                    var minimumField = $('<input/>',{class:"node-input-led-minimum",type:"number",style: "width:100px; margin-right:10px;"}).appendTo(minimumRow);
+                    minimumField.val(led.minimum);
+                  
+                    // Add a 'Maximum' property row
+                    maximumRow = addPropertyRow(container, "Maximum");
+                    var maximumField = $('<input/>',{class:"node-input-led-maximum",type:"number",style: "width:100px; margin-right:10px;"}).appendTo(maximumRow);
+                    maximumField.val(led.maximum);
+                    
+                    // Add a 'Step size' property row, where the input field is accompanied by dropdown (with percentage and fixed)
+                    stepSizeRow = addPropertyRow(container, "Step size");
+                    var stepSizeField = $('<input/>',{class:"node-input-led-stepSize",type:"number",style: "width:100px; margin-right:10px;"}).appendTo(stepSizeRow);
+                    stepSizeField.val(led.stepSize);
+                    var stepSizeTypeField = $('<select/>',{class:"node-input-led-stepSizeType",type:"text"}).css({"width":"100px%","margin-left":"5px","margin-right":"5px"}).appendTo(stepSizeRow);
+                    stepSizeTypeField.append($('<option>', {value: "perc", text: 'percentage'}));
+                    stepSizeTypeField.append($('<option>', {value: "fixed", text: 'fixed'}));
+                    stepSizeTypeField.val(led.stepSizeType);
+                    
+                    // Make sure all rows are hidden at startup (i.e. show only the header rows)
+                    expandButton.click();
+                },
+                removable: true,
+                sortable: true
+            });
+            
+            if (this.leds.length === 0) {
+                var answer = confirm("Initialize the list with RGB LED's ?");
+                if (answer == true) {
+                    var led = createLed();
+                    led.description = "red";
+                    led.color = "#ff0000";
+                    this.leds.push(led);
+                    
+                    led = createLed();
+                    led.description = "green";
+                    led.color = "#00ff00";
+                    this.leds.push(led);
+                    
+                    led = createLed();
+                    led.description = "blue";
+                    led.color = "#0000ff";
+                    this.leds.push(led);
+                }
+            }
+            
+            // Show all the LEDs (stored in this node) into the editableList
+            this.leds.forEach(function (led, index) {
+                ledList.editableList('addItem', {
+                    color           : led.color,
+                    description     : led.description, 
+                    source          : led.source, 
+                    sourceType      : led.sourceType, 
+                    destination     : led.destination, 
+                    destinationType : led.destinationType,
+                    minimum         : led.minimum, 
+                    maximum         : led.maximum, 
+                    stepSize        : led.stepSize, 
+                    stepUnit        : led.stepUnit
+                });
+            });
+        },
+        oneditsave: function() {
+            var node = this;
+
+            // Copy all the LEDs from the editableList to this node
+            node.leds = [];
+            var ledList = $("#node-input-leds-container").editableList('items');
+            ledList.each(function(index) {
+                var row = $(this);
+                var led = {
+                    color           : row.find(".node-input-led-color").val(),
+                    description     : row.find(".node-input-led-description").val(),
+                    source          : row.find(".node-input-led-source").val(),
+                    sourceType      : row.find(".node-input-led-sourceType").val(),
+                    destination     : row.find(".node-input-led-destination").val(),
+                    destinationType : row.find(".node-input-led-destinationType").val(),
+                    minimum         : row.find(".node-input-led-minimum").val(),
+                    maximum         : row.find(".node-input-led-maximum").val(),
+                    stepSize        : row.find(".node-input-led-stepSize").val(),
+                    stepUnit        : row.find(".node-input-led-stepUnit").val()
+                }
+                node.leds.push(led);
+            });
+            window.node_ace_editor = null;
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="led-strip">
+    <div class="form-row">
+        <label for="node-input-description"><i class="icon-tag"></i> Description</label>
+        <input type="text" id="node-input-description" placeholder="Description">
+    </div>
+    </br>
+    <div class="form-row">
+        <input type="checkbox" id="node-input-aspectRatio" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-aspectRatio" style="width:70%;"> Keep color aspect ration</label>
+    </div>
+    </br>
+    <div class="form-row form-row-auto-height">
+        <!-- Table with LED definitions -->
+        <ol id="node-input-leds-container"></ol>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="led-strip">
+    <p>A node for controlling LED strips.</p>
+</script>
+
