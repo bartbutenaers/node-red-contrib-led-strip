@@ -18,6 +18,8 @@
 
     function LedStripNode(config) {
         RED.nodes.createNode(this, config);
+        this.aspectRatio = config.aspectRatio;
+        this.leds = config.leds;
 
         var node = this;
 
