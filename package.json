@@ -17,7 +17,7 @@
     },
     "node-red": {
         "nodes": {
-            "msg-dimmer": "msg_dimmer.js"
+            "led-strip": "led_strip.js"
         }
     }
 }
